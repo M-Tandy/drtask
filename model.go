@@ -17,19 +17,23 @@ import (
 )
 
 type model struct {
-	formModel         FormInputModel
-	confirmModel      FormConfirmModel
-	state             FocusedState
-	dump              io.Writer // For Debuggging
-	list              list.Model
-	aiPrompt          string
-	aiOutput          string
-	aiMsgChannel      chan string
-	msgGenerationDone bool
-	width             int
-	height            int
-	confirmquit       bool
-	showoverlay       bool
+	dump io.Writer // For Debuggging
+
+	width  int
+	height int
+
+	state       FocusedState
+	showoverlay bool
+	confirmquit bool
+
+	formModel    FormInputModel
+	confirmModel FormConfirmModel
+	list         list.Model
+
+	aiPrompt         string
+	aiOutput         string
+	aiMsgChannel     chan string
+	aiGenerationDone bool
 }
 
 type FocusedState int
@@ -126,7 +130,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(m.GenerateAICmd, doTick())
 
 	case TickMsg:
-		if !m.msgGenerationDone || len(m.aiMsgChannel) > 0 {
+		if !m.aiGenerationDone || len(m.aiMsgChannel) > 0 {
 			newContents := <-m.aiMsgChannel
 			m.aiOutput += newContents
 			return m, doTick()
@@ -285,7 +289,7 @@ type AIFinished struct {
 
 // tea.Cmd for sending a request to the locally running AI to generate a new message
 func (m *model) GenerateAICmd() tea.Msg {
-	m.msgGenerationDone = false
+	m.aiGenerationDone = false
 	m.aiOutput = ""
 	ai.AiRequestStreamedChannel(
 		`You are 'Dr. Task', an assistant whose goal is to provide an overview and advice for a user of a task management program.
@@ -297,7 +301,7 @@ func (m *model) GenerateAICmd() tea.Msg {
 		m.aiPrompt,
 		m.aiMsgChannel,
 	)
-	m.msgGenerationDone = true
+	m.aiGenerationDone = true
 
 	return AIFinished{content: m.aiOutput}
 }
