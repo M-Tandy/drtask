@@ -13,17 +13,17 @@ import (
 
 func main() {
 	// Debugging
-	// - set DEBUG (`export DEBUG=1`) and `tail -f messages.log` in another terminal
+	// - set DEBUG (`export DEBUG=1`) 
 	var dump *os.File
 	if _, ok := os.LookupEnv("DEBUG"); ok {
+		// Live tea.Msg viewing: `tail -f messages.log` in another terminal
 		var err error
 		dump, err = os.OpenFile("messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 		if err != nil {
 			os.Exit(1)
 		}
-	}
-
-	if len(os.Getenv("DEBUG")) > 0 {
+		
+		// Logging to debug.log
 		f, err := tea.LogToFile("debug.log", "debug")
 		if err != nil {
 			fmt.Println("fatal:", err)
